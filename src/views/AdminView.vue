@@ -3,6 +3,14 @@
         <el-menu :default-active="typepage" class="el-menu-demo" mode="horizontal">
             <el-menu-item index="1">商品审核</el-menu-item>
             <el-menu-item index="2">用户管理</el-menu-item>
+            <el-dropdown @command="outlogin" style="position: absolute;right: 15px;line-height: 61px;cursor: pointer;">
+                <span class="el-dropdown-link">
+                    管理员<i class="el-icon-arrow-down el-icon--right"></i>
+                </span>
+                <el-dropdown-menu slot="dropdown">
+                    <el-dropdown-item>退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+            </el-dropdown>
         </el-menu>
         <div class="shopbox" v-if="typepage == 1">
             <el-table :data="tableData" border style="width: 100%">
@@ -70,6 +78,13 @@ export default {
     methods: {
         handleClick(row) {
             console.log(row);
+        },
+        // 退出登录
+        outlogin() {
+            console.log('123')
+            localStorage.removeItem('adminid')
+            this.$router.push('login')
+            this.$message("账号已退出登录!");
         }
     }
 }
