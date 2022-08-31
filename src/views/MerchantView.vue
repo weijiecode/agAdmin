@@ -12,10 +12,9 @@
                 </el-dropdown-menu>
             </el-dropdown>
         </el-menu>
-
         <div class="shopbox" v-if="typepage == 1">
             <!-- 添加产品 -->
-            <el-button type="primary">添加产品</el-button>
+            <el-button @click="shopVisible = true" type="primary">添加产品</el-button>
             <!-- 商品管理列表 -->
             <el-table :data="shopData" border style="width: 100%;margin-top: 5px;">
                 <el-table-column prop="id" label="id" width="150">
@@ -30,7 +29,7 @@
                 </el-table-column>
                 <el-table-column label="所属店铺">
                     <template slot-scope="scope">
-                        {{ shopname }}
+                        {{  shopname  }}
                     </template>
                 </el-table-column>
                 <el-table-column label="操作" width="100">
@@ -44,6 +43,34 @@
         <!-- 订单管理列表 -->
         <div class="shopbox" v-if="typepage == 2">
         </div>
+        <!-- 添加商品弹框 -->
+        <el-dialog title="添加商品" :visible.sync="shopVisible" width="60%">
+            <el-form status-icon label-width="100px" class="demo-ruleForm">
+                <el-form-item label="标题">
+                    <el-input placeholder="请输入产品标题" v-model="title"></el-input>
+                </el-form-item>
+                <el-form-item label="内容">
+                    <el-input type="textarea" :rows="2" placeholder="请输入产品内容" v-model="content">
+                    </el-input>
+                </el-form-item>
+                <el-form-item label="价格">
+                    <el-input style="width: 30%" placeholder="产品价格" v-model="price">
+                        <template slot="append">¥</template>
+                    </el-input>
+                </el-form-item>
+                <el-form-item label="产品图片">
+                    <el-upload class="avatar-uploader" action="http://localhost:5001/shop/shopphotouploadurl"
+                        :show-file-list="false" :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
+                        <img v-if="photo" :src="photo" class="avatar">
+                        <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                    </el-upload>
+                </el-form-item>
+            </el-form>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="shopVisible = false">取 消</el-button>
+                <el-button type="primary" @click="saveshop">上传审核</el-button>
+            </span>
+        </el-dialog>
     </div>
 </template>
 
@@ -57,7 +84,17 @@ export default {
             // 产品数据
             shopData: [],
             // 店铺名称
-            shopname: ''
+            shopname: '',
+            // 控制添加商品弹框
+            shopVisible: false,
+            // 产品标题
+            title: '',
+            // 产品内容
+            content: '',
+            // 产品价格
+            price: '',
+            // 产品图片
+            photo: ''
         }
     },
     // 页面一加载执行下面方法
@@ -87,6 +124,29 @@ export default {
             localStorage.removeItem('shopname')
             this.$router.push('login')
             this.$message("账号已退出登录!");
+        },
+        // 上传图片方法
+        handleAvatarSuccess(res, file) {
+            // 后端返回url赋值给photo
+            this.photo = res;
+        },
+        beforeAvatarUpload(file) {
+            const isJPG = file.type === 'image/jpeg';
+            const isLt2M = file.size / 1024 / 1024 < 2;
+
+            if (!isJPG) {
+                this.$message.error('上传头像图片只能是 JPG 格式!');
+            }
+            if (!isLt2M) {
+                this.$message.error('上传头像图片大小不能超过 2MB!');
+            }
+            return isJPG && isLt2M;
+        },
+        // 提交审核商品数据
+        async saveshop() {
+            const res = await this.$http.post("shop/addshop",{
+
+            })
         }
     }
 }
@@ -96,5 +156,33 @@ export default {
 .shopbox {
     margin-top: 20px;
     padding: 0 20px;
+}
+
+/* 图片css */
+::v-deep .avatar-uploader .el-upload {
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+::v-deep .avatar-uploader .el-upload:hover {
+    border-color: #409EFF;
+}
+
+::v-deep .avatar-uploader-icon {
+    font-size: 28px;
+    color: #8c939d;
+    width: 178px;
+    height: 178px;
+    line-height: 178px;
+    text-align: center;
+}
+
+::v-deep .avatar {
+    width: 178px;
+    height: 178px;
+    display: block;
 }
 </style>
