@@ -25,17 +25,22 @@
                 </el-table-column>
                 <el-table-column prop="price" label="价格">
                 </el-table-column>
-                <el-table-column prop="photo" label="图片">
+                <el-table-column prop="photo" label="图片" width="150">
+                    <template slot-scope="scope">
+                        <img :src="scope.row.photo" class="shopimg">
+                    </template>
                 </el-table-column>
                 <el-table-column label="所属店铺">
                     <template slot-scope="scope">
-                        {{  shopname  }}
+                        {{ shopname }}
                     </template>
+                </el-table-column>
+                <el-table-column prop="status" label="审核状态">
                 </el-table-column>
                 <el-table-column label="操作" width="100">
                     <template slot-scope="scope">
-                        <el-button @click="handleClick(scope.row)" type="text" size="small">查看</el-button>
-                        <el-button type="text" size="small">编辑</el-button>
+                        <el-button @click="handleClick(scope.row)" type="text" size="small">编辑</el-button>
+                        <el-button type="text" size="small">删除</el-button>
                     </template>
                 </el-table-column>
             </el-table>
@@ -71,6 +76,35 @@
                 <el-button type="primary" @click="saveshop">上传审核</el-button>
             </span>
         </el-dialog>
+
+        <!-- 修改商品弹框 -->
+        <el-dialog title="修改商品" :visible.sync="ushopVisible" width="60%">
+            <el-form status-icon label-width="100px" class="demo-ruleForm">
+                <el-form-item label="标题">
+                    <el-input placeholder="请输入产品标题" v-model="utitle"></el-input>
+                </el-form-item>
+                <el-form-item label="内容">
+                    <el-input type="textarea" :rows="2" placeholder="请输入产品内容" v-model="ucontent">
+                    </el-input>
+                </el-form-item>
+                <el-form-item label="价格">
+                    <el-input style="width: 30%" placeholder="产品价格" v-model="uprice">
+                        <template slot="append">¥</template>
+                    </el-input>
+                </el-form-item>
+                <el-form-item label="产品图片">
+                    <el-upload class="avatar-uploader" action="http://localhost:5001/shop/shopphotouploadurl"
+                        :show-file-list="false" :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
+                        <img v-if="uphoto" :src="uphoto" class="avatar">
+                        <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                    </el-upload>
+                </el-form-item>
+            </el-form>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="shopVisible = false">取 消</el-button>
+                <el-button type="primary" @click="usaveshop">修改产品</el-button>
+            </span>
+        </el-dialog>
     </div>
 </template>
 
@@ -87,6 +121,8 @@ export default {
             shopname: '',
             // 控制添加商品弹框
             shopVisible: false,
+            // 控制修改商品弹框
+            ushopVisible: false,
             // 产品标题
             title: '',
             // 产品内容
@@ -94,7 +130,17 @@ export default {
             // 产品价格
             price: '',
             // 产品图片
-            photo: ''
+            photo: '',
+            // 修改产品标题
+            utitle: '',
+            // 修改产品内容
+            ucontent: '',
+            // 修改产品价格
+            uprice: '',
+            // 修改产品图片
+            uphoto: '',
+            // 指定编辑产品的id
+            shopid: ''
         }
     },
     // 页面一加载执行下面方法
@@ -103,8 +149,33 @@ export default {
         this.getShop()
     },
     methods: {
-        handleClick(row) {
-            console.log(row);
+        // 点击编辑
+        async handleClick(row) {
+            this.ushopVisible = true
+            this.utitle = row.title
+            this.ucontent = row.content
+            this.uphoto = row.photo
+            this.uprice = row.price
+            this.shopid = row.id
+        },
+        // 提交修改
+        async usaveshop() {
+            const res = await this.$http.post("shop/updateshop", {
+                title: this.utitle,
+                content: this.ucontent,
+                photo: this.uphoto,
+                price: this.uprice,
+                id: this.shopid
+            })
+            console.log(res)
+            if (res.data.code === 200) {
+                this.$message.success("修改产品成功")
+                // 添加成功后刷新列表数据
+                this.getShop()
+                this.ushopVisible = false
+            } else {
+                this.$message.error("修改失败，请重试")
+            }
         },
         // 获取产品数据
         async getShop() {
@@ -114,12 +185,20 @@ export default {
             console.log(res)
             if (res.data.code === 200) {
                 this.shopData = res.data.data
+                this.shopData.forEach((item, index) => {
+                    if (item.status === '0') {
+                        this.shopData[index].status = '待审核'
+                    } else if (item.status === '1') {
+                        this.shopData[index].status = '审核通过'
+                    } else if (item.status === '2') {
+                        this.shopData[index].status = '审核未通过'
+                    }
+                })
             }
             console.log(this.shopData)
         },
         // 退出登录
         outlogin() {
-            console.log('123')
             localStorage.removeItem('merchantid')
             localStorage.removeItem('shopname')
             this.$router.push('login')
@@ -144,9 +223,27 @@ export default {
         },
         // 提交审核商品数据
         async saveshop() {
-            const res = await this.$http.post("shop/addshop",{
-
+            const res = await this.$http.post("shop/addshop", {
+                title: this.title,
+                content: this.content,
+                photo: this.photo,
+                price: this.price,
+                merchantid: localStorage.getItem('merchantid') * 1,
+                status: 0
             })
+            console.log(res)
+            if (res.data.code === 200) {
+                this.$message.success("添加产品成功")
+                // 添加成功后刷新列表数据
+                this.getShop()
+                this.shopVisible = false
+                this.title = ''
+                this.content = ''
+                this.photo = ''
+                this.price = ''
+            } else {
+                this.$message.error("添加失败，请重试")
+            }
         }
     }
 }
@@ -184,5 +281,10 @@ export default {
     width: 178px;
     height: 178px;
     display: block;
+}
+
+.shopimg {
+    width: 120px;
+    height: 80px;
 }
 </style>
