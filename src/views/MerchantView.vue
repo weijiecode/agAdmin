@@ -94,7 +94,7 @@
                 </el-form-item>
                 <el-form-item label="产品图片">
                     <el-upload class="avatar-uploader" action="http://localhost:5001/shop/shopphotouploadurl"
-                        :show-file-list="false" :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
+                        :show-file-list="false" :on-success="uhandleAvatarSuccess" :before-upload="beforeAvatarUpload">
                         <img v-if="uphoto" :src="uphoto" class="avatar">
                         <i v-else class="el-icon-plus avatar-uploader-icon"></i>
                     </el-upload>
@@ -204,11 +204,17 @@ export default {
             this.$router.push('login')
             this.$message("账号已退出登录!");
         },
-        // 上传图片方法
+        // 添加上传图片方法
         handleAvatarSuccess(res, file) {
             // 后端返回url赋值给photo
             this.photo = res;
         },
+        // 编辑上传图片方法
+        uhandleAvatarSuccess(res, file) {
+            // 后端返回url赋值给photo
+            this.uphoto = res;
+        },
+        // 图片上传之前的监测操作
         beforeAvatarUpload(file) {
             const isJPG = file.type === 'image/jpeg';
             const isLt2M = file.size / 1024 / 1024 < 2;
