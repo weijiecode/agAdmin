@@ -264,39 +264,39 @@ export default {
 
             const res2 = await this.$http.post('shop/selectpay')
             console.log(res2)
-            if(res2.data.code === 200){
+            if (res2.data.code === 200) {
                 this.oldpay = res2.data.data
                 // 获取用户名
                 this.$http.post('account/iduser').then(res1 => {
                     console.log(res1)
-                    if(res2.data.code === 200){
-                    this.iduser = res1.data.data
-                    console.log(this.oldpay)
-                    this.pay = []
-                    this.oldpay.forEach((item,index) => {
-                        this.shopData.forEach(subitem => {
-                            if(item.commodityId == subitem.id){
-                                this.pay[index] = {
-                                    id: item.id,
-                                    title: subitem.title,
-                                    price: subitem.price,
-                                    photo: subitem.photo,
-                                    userId: item.userId,
-                                    remark: item.remark,
-                                    address: item.address
+                    if (res2.data.code === 200) {
+                        this.iduser = res1.data.data
+                        console.log(this.oldpay)
+                        this.pay = []
+                        this.oldpay.forEach((item, index) => {
+                            this.shopData.forEach(subitem => {
+                                if (item.commodityId == subitem.id) {
+                                    this.pay[index] = {
+                                        id: item.id,
+                                        title: subitem.title,
+                                        price: subitem.price,
+                                        photo: subitem.photo,
+                                        userId: item.userId,
+                                        remark: item.remark,
+                                        address: item.address
+                                    }
                                 }
-                            }
+                            })
                         })
-                    })
-                    console.log(this.pay)
-                    this.pay.forEach((subitem1,subindex1) => {
-                        this.iduser.forEach(subitem2 => {
-                            if(subitem1.userId == subitem2.id){
-                                this.pay[subindex1].username = subitem2.username
-                            }
+                        console.log(this.pay)
+                        this.pay.forEach((subitem1, subindex1) => {
+                            this.iduser.forEach(subitem2 => {
+                                if (subitem1.userId == subitem2.id) {
+                                    this.pay[subindex1].username = subitem2.username
+                                }
+                            })
                         })
-                    })
-                    console.log(this.pay)
+                        console.log(this.pay)
                     }
                 })
 
@@ -304,34 +304,34 @@ export default {
         },
         // 保存修改订单信息
         async editpay() {
-            const res = await this.$http.post('shop/updatepay',{
+            const res = await this.$http.post('shop/updatepay', {
                 remark: this.remark,
                 address: this.address,
                 id: this.id
             })
             console.log(res)
-            if(res.data.code === 200) {
+            if (res.data.code === 200) {
                 this.payVisible = false
                 this.$message.success('修改成功')
                 this.getShop()
-            }else {
+            } else {
                 this.$message.error('修改失败，请重试')
             }
         },
         // 取消订单
         delpay(row) {
-            this.$http.post('shop/delpay',{
+            this.$http.post('shop/delpay', {
                 id: row.id
             }).then(res => {
                 console.log(res)
-                if(res.data.code === 200) {
+                if (res.data.code === 200) {
                     this.$message.success('该订单已取消')
                     this.getShop()
-                }else {
+                } else {
                     this.$message.error('订单取消失败，请重试')
                 }
             })
-            
+
         },
         handleSelect(item) {
             this.typepage = item

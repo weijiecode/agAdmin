@@ -3,6 +3,7 @@
         <el-menu @select="handleSelect" :default-active="typepage" class="el-menu-demo" mode="horizontal">
             <el-menu-item index="1">商品审核</el-menu-item>
             <el-menu-item index="2">用户管理</el-menu-item>
+            <el-menu-item index="3">资讯管理</el-menu-item>
             <el-dropdown @command="outlogin" style="position: absolute;right: 15px;line-height: 61px;cursor: pointer;">
                 <span class="el-dropdown-link">
                     管理员<i class="el-icon-arrow-down el-icon--right"></i>
@@ -66,7 +67,30 @@
                 </el-table-column>
             </el-table>
         </div>
-
+        <!-- 发布资讯 -->
+        <div class="shopbox" v-if="typepage == '3'">
+            <el-button type="primary">发布资讯</el-button>
+            <!-- 资讯管理列表 -->
+            <el-table :data="informationData" border style="width: 100%;margin-top: 5px;">
+                <el-table-column prop="id" label="id" width="150">
+                </el-table-column>
+                <el-table-column prop="title" label="标题">
+                </el-table-column>
+                <el-table-column prop="picture" label="内容">
+                </el-table-column>
+                <el-table-column prop="picture" label="图片" width="150">
+                    <template slot-scope="scope">
+                        <img :src="scope.row.photo" class="shopimg">
+                    </template>
+                </el-table-column>
+                <el-table-column label="操作" width="100">
+                    <template slot-scope="scope">
+                        <el-button @click="editHandleClickInfo(scope.row)" type="text" size="small">编辑</el-button>
+                        <el-button @click="delHandleClickInfo(scope.row)" type="text" size="small">删除</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </div>
         <!-- 审核商品弹框 -->
         <el-dialog title="审核商品" :visible.sync="shopVisible" width="45%">
             <el-radio-group v-model="radio">
@@ -112,6 +136,30 @@
                 <el-button type="primary" @click="edituser">修改信息</el-button>
             </span>
         </el-dialog>
+
+        <!-- 发布资讯弹框 -->
+        <el-dialog title="发布资讯" :visible.sync="shopVisibleInfo" width="60%">
+            <el-form status-icon label-width="100px" class="demo-ruleForm">
+                <el-form-item label="标题">
+                    <el-input placeholder="请输入资讯标题" v-model="title"></el-input>
+                </el-form-item>
+                <el-form-item label="资讯图片">
+                    <el-upload class="avatar-uploader" action="http://localhost:5001/shop/shopphotouploadurl"
+                        :show-file-list="false" :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
+                        <img v-if="photo" :src="photo" class="avatar">
+                        <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                    </el-upload>
+                </el-form-item>
+                <el-form-item label="内容">
+                    <el-input type="textarea" :rows="2" placeholder="请输入资讯内容" v-model="content">
+                    </el-input>
+                </el-form-item>
+            </el-form>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="shopVisibleInfo = false">取 消</el-button>
+                <el-button type="primary" @click="saveinfo">发布资讯</el-button>
+            </span>
+        </el-dialog>
     </div>
 </template>
 
@@ -155,13 +203,18 @@ export default {
             // 用户简介
             introduction: '',
             // 控制显示修改用户弹框
-            ushopVisible: false
+            ushopVisible: false,
+            // 资讯列表数据
+            informationData: [],
+            // 控制发布资讯弹框显示
+            shopVisibleInfo: false,
         }
     },
     // 页面一加载执行下面方法
     mounted() {
         this.getShop()
         this.getUsers()
+        this.getInformation()
     },
     methods: {
         // 点击审核
@@ -212,6 +265,16 @@ export default {
                 })
             }
         },
+        // 获取资讯数据
+        async getInformation() {
+            const res = await this.$http.get('information/getinformation')
+            console.log(res)
+            if (res.data.code === 200) {
+                this.informationData = res.data.data
+            }
+        },
+        // 发布资讯
+        saveinfo() {},
         // 切换菜单
         handleSelect(item) {
             console.log(item)
@@ -237,39 +300,39 @@ export default {
         // 删除用户
         async delHandleClick(row) {
             console.log(row.id)
-            const res = await this.$http.post('account/deluser',{
+            const res = await this.$http.post('account/deluser', {
                 id: row.id
             })
-            if(res.data.code === 200) {
+            if (res.data.code === 200) {
                 this.$message.success('删除成功')
                 this.getUsers()
-            }else {
+            } else {
                 this.$message.error('删除用户失败，请重试')
             }
         },
         // 提交修改用户数据
         async edituser() {
-            if(this.sex == '男') {
+            if (this.sex == '男') {
                 this.sex = '1'
-            }else {
+            } else {
                 this.sex = '0'
             }
-            const res = await this.$http.post('account/edituser',{
+            const res = await this.$http.post('account/edituser', {
                 username: this.username,
                 nickname: this.nickname,
                 sex: this.sex,
                 phone: this.phone,
                 email: this.email,
-                introduction:this.introduction,
+                introduction: this.introduction,
                 id: this.userid
             })
             console.log(res)
-            if(res.data.code === 200) {
+            if (res.data.code === 200) {
                 this.ushopVisible = false
                 this.$message.success('修改用户信息成功')
                 this.getUsers()
             }
-            
+
         },
         // 提交审核
         async saveshop() {
