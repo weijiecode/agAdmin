@@ -214,7 +214,7 @@ export default {
     },
     methods: {
         // 点击编辑
-        async handleClick(row) {
+        handleClick(row) {
             this.ushopVisible = true
             this.utitle = row.title
             this.ucontent = row.content
@@ -363,16 +363,11 @@ export default {
         },
         // 图片上传之前的监测操作
         beforeAvatarUpload(file) {
-            const isJPG = file.type === 'image/jpeg';
             const isLt2M = file.size / 1024 / 1024 < 2;
-
-            if (!isJPG) {
-                this.$message.error('上传头像图片只能是 JPG 格式!');
-            }
             if (!isLt2M) {
                 this.$message.error('上传头像图片大小不能超过 2MB!');
             }
-            return isJPG && isLt2M;
+            return isLt2M;
         },
         // 提交审核商品数据
         async saveshop() {

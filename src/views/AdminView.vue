@@ -69,18 +69,18 @@
         </div>
         <!-- 发布资讯 -->
         <div class="shopbox" v-if="typepage == '3'">
-            <el-button type="primary">发布资讯</el-button>
+            <el-button @click="shopVisibleInfo = true" type="primary">发布资讯</el-button>
             <!-- 资讯管理列表 -->
             <el-table :data="informationData" border style="width: 100%;margin-top: 5px;">
                 <el-table-column prop="id" label="id" width="150">
                 </el-table-column>
                 <el-table-column prop="title" label="标题">
                 </el-table-column>
-                <el-table-column prop="picture" label="内容">
+                <el-table-column prop="content" label="内容">
                 </el-table-column>
                 <el-table-column prop="picture" label="图片" width="150">
                     <template slot-scope="scope">
-                        <img :src="scope.row.photo" class="shopimg">
+                        <img :src="scope.row.picture" class="shopimg">
                     </template>
                 </el-table-column>
                 <el-table-column label="操作" width="100">
@@ -141,23 +141,47 @@
         <el-dialog title="发布资讯" :visible.sync="shopVisibleInfo" width="60%">
             <el-form status-icon label-width="100px" class="demo-ruleForm">
                 <el-form-item label="标题">
-                    <el-input placeholder="请输入资讯标题" v-model="title"></el-input>
+                    <el-input placeholder="请输入资讯标题" v-model="infoTitle"></el-input>
                 </el-form-item>
                 <el-form-item label="资讯图片">
-                    <el-upload class="avatar-uploader" action="http://localhost:5001/shop/shopphotouploadurl"
+                    <el-upload class="avatar-uploader" action="http://localhost:5001/information/infophotouploadurl"
                         :show-file-list="false" :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
-                        <img v-if="photo" :src="photo" class="avatar">
+                        <img v-if="infoPicture" :src="infoPicture" class="avatar">
                         <i v-else class="el-icon-plus avatar-uploader-icon"></i>
                     </el-upload>
                 </el-form-item>
                 <el-form-item label="内容">
-                    <el-input type="textarea" :rows="2" placeholder="请输入资讯内容" v-model="content">
+                    <el-input type="textarea" :rows="5" placeholder="请输入资讯内容" v-model="infoContent">
                     </el-input>
                 </el-form-item>
             </el-form>
             <span slot="footer" class="dialog-footer">
                 <el-button @click="shopVisibleInfo = false">取 消</el-button>
                 <el-button type="primary" @click="saveinfo">发布资讯</el-button>
+            </span>
+        </el-dialog>
+
+        <!-- 修改咨询弹框 -->
+        <el-dialog title="修改商品" :visible.sync="infoEditVisibleInfo" width="60%">
+            <el-form status-icon label-width="100px" class="demo-ruleForm">
+                <el-form-item label="标题">
+                    <el-input placeholder="请输入咨询标题" v-model="uinfoTitle"></el-input>
+                </el-form-item>
+                <el-form-item label="产品图片">
+                    <el-upload class="avatar-uploader" action="http://localhost:5001/information/infophotouploadurl"
+                        :show-file-list="false" :on-success="uhandleAvatarSuccess" :before-upload="beforeAvatarUpload">
+                        <img v-if="uinfoPicture" :src="uinfoPicture" class="avatar">
+                        <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                    </el-upload>
+                </el-form-item>
+                <el-form-item label="内容">
+                    <el-input type="textarea" :rows="5" placeholder="请输入咨询内容" v-model="uinfoContent">
+                    </el-input>
+                </el-form-item>
+            </el-form>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="infoEditVisibleInfo = false">取 消</el-button>
+                <el-button type="primary" @click="usaveinformation">修改咨询</el-button>
             </span>
         </el-dialog>
     </div>
@@ -208,6 +232,24 @@ export default {
             informationData: [],
             // 控制发布资讯弹框显示
             shopVisibleInfo: false,
+            // 咨询标题
+            infoTitle: '',
+            // 咨询内容
+            infoContent: '',
+            // 咨询图片
+            infoPicture: '',
+            // 咨询时间
+            infoDatetime: '',
+            // 控制修改资讯弹框显示
+            infoEditVisibleInfo: false,
+            // 编辑咨询标题
+            uinfoTitle: '',
+            // 编辑咨询内容
+            uinfoContent: '',
+            // 编辑咨询图片
+            uinfoPicture: '',
+            // 咨询id
+            informationid: ''
         }
     },
     // 页面一加载执行下面方法
@@ -274,7 +316,77 @@ export default {
             }
         },
         // 发布资讯
-        saveinfo() {},
+        async saveinfo() {
+            const res = await this.$http.post('information/addinformation', {
+                title: this.infoTitle,
+                content: this.infoContent,
+                picture: this.infoPicture
+            })
+            console.log(res)
+            if (res.data.code === 200) {
+                this.getInformation()
+                this.shopVisibleInfo = false
+                this.$message.success('发布成功')
+            }else {
+                this.$message.error('发布失败，请重试')
+            }
+        },
+        // 点击咨询编辑
+        editHandleClickInfo(row) {
+            this.infoEditVisibleInfo = true
+            console.log(row)
+            this.uinfoTitle = row.title
+            this.uinfoContent = row.content
+            this.uinfoPicture = row.picture
+            this.informationid = row.id
+        },
+        // 点击咨询删除
+        async delHandleClickInfo(row) {
+            console.log(row)
+            const res = await this.$http.post('information/delinformation', {
+                id: row.id
+            })
+            console.log(res)
+            if (res.data.code === 200) {
+                this.getInformation()
+                this.$message.success('删除成功')
+            }
+        },
+        // 编辑咨询
+        async usaveinformation() {
+            const res = await this.$http.post('information/editinformation', {
+                title: this.uinfoTitle,
+                content: this.uinfoContent,
+                picture: this.uinfoPicture,
+                id: this.informationid
+            })
+            console.log(res)
+            if (res.data.code === 200) {
+                this.infoEditVisibleInfo = false
+                this.getInformation()
+                this.$message.success('修改成功')
+            }else {
+                this.$message.error('修改失败，请重试')
+            }
+        },
+        // 添加上传图片方法
+        handleAvatarSuccess(res, file) {
+            // 后端返回url赋值给picture
+            this.infoPicture = res;
+        },
+        // 编辑上传图片方法
+        uhandleAvatarSuccess(res, file) {
+            // 后端返回url赋值给picture
+            this.uinfoPicture = res;
+        },
+        // 图片上传之前的监测操作
+        beforeAvatarUpload(file) {
+            const isLt2M = file.size / 1024 / 1024 < 2;
+            if (!isLt2M) {
+                this.$message.error('上传头像图片大小不能超过 2MB!');
+            }
+            return isLt2M;
+        },
         // 切换菜单
         handleSelect(item) {
             console.log(item)
@@ -364,6 +476,39 @@ export default {
 .shopbox {
     margin-top: 20px;
     padding: 0 20px;
+}
+
+.shopimg {
+    width: 120px;
+    height: 80px;
+}
+
+/* 图片css */
+::v-deep .avatar-uploader .el-upload {
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+::v-deep .avatar-uploader .el-upload:hover {
+    border-color: #409EFF;
+}
+
+::v-deep .avatar-uploader-icon {
+    font-size: 28px;
+    color: #8c939d;
+    width: 178px;
+    height: 178px;
+    line-height: 178px;
+    text-align: center;
+}
+
+::v-deep .avatar {
+    width: 178px;
+    height: 178px;
+    display: block;
 }
 
 .shopimg {
